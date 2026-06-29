@@ -16,16 +16,16 @@ graph TD
 
     %% 2. API & Orchestration Layer
     API["Backend API Layer (Express)"]:::api
-    Orchestrator{"LangGraph StateGraph Orchestrator\n(Controls Workflow & State)"}:::graph
+    Orchestrator{"LangGraph StateGraph Orchestrator<br/>(Controls Workflow & State)"}:::graph
 
     Frontend <--> |REST / WebSockets| API
     Email <--> |Webhooks| API
     API <--> |Invokes Graph with thread_id| Orchestrator
 
     %% 3. Persistence Layer
-    PG_Business[("PostgreSQL\n(Sequelize: Business Data)")]:::db
-    PG_Graph[("PostgresSaver\n(LangGraph Checkpointer)")]:::db
-    VectorDB[("Vector DB\n(Historical Deals)")]:::db
+    PG_Business[("PostgreSQL<br/>(Sequelize: Business Data)")]:::db
+    PG_Graph[("PostgresSaver<br/>(LangGraph Checkpointer)")]:::db
+    VectorDB[("Vector DB<br/>(Historical Deals)")]:::db
 
     API --> PG_Business
     Orchestrator <--> |State Snapshot / HITL| PG_Graph
@@ -58,10 +58,18 @@ graph TD
 
     %% State flow within Graph
     Orchestrator --> Parse
-    Parse --> Tone & Behavior & Concern & Profile
-    Tone & Behavior & Concern & Profile --> Decide
-    Decide --> |Counter/Meso| Meso & Stall
-    Meso & Stall --> Respond
+    Parse --> Tone
+    Parse --> Behavior
+    Parse --> Concern
+    Parse --> Profile
+    Tone --> Decide
+    Behavior --> Decide
+    Concern --> Decide
+    Profile --> Decide
+    Decide --> |Counter/Meso| Meso
+    Decide --> |Counter/Meso| Stall
+    Meso --> Respond
+    Stall --> Respond
     Respond --> Validate
     Validate --> |Pass/Fail Loop| Orchestrator
     
@@ -71,8 +79,10 @@ graph TD
     Rag --> Decide
 
     %% 5. External APIs
-    LLM["LLM Services\n(OpenAI / Anthropic)"]:::ext
-    Track_1 & Track_2 & Track_3 & Track_4_5 --> |API Calls| LLM
+    LLM["LLM Services<br/>(OpenAI / Anthropic)"]:::ext
+    Parse --> |API Calls| LLM
+    Respond --> |API Calls| LLM
+    Decide --> |API Calls| LLM
 ```
 
 ### Flow Explanation:
