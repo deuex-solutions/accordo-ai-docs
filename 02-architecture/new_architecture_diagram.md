@@ -16,27 +16,30 @@ graph TD
 
     %% 2. API & Orchestration Layer
     API["Backend API Layer (Express)"]:::api
-    Orchestrator{"LangGraph StateGraph Orchestrator<br/>(Controls Workflow & State)"}:::graph
+    Orchestrator["LangGraph StateGraph Orchestrator<br/>(Controls Workflow & State)"]:::graph
 
-    Frontend <--> |REST / WebSockets| API
-    Email <--> |Webhooks| API
-    API <--> |Invokes Graph with thread_id| Orchestrator
+    Frontend -->|REST / WebSockets| API
+    API -->|REST / WebSockets| Frontend
+    Email -->|Webhooks| API
+    API -->|Invokes Graph with thread_id| Orchestrator
+    Orchestrator -->|Returns Result| API
 
     %% 3. Persistence Layer
-    PG_Business[("PostgreSQL<br/>(Sequelize: Business Data)")]:::db
-    PG_Graph[("PostgresSaver<br/>(LangGraph Checkpointer)")]:::db
-    VectorDB[("Vector DB<br/>(Historical Deals)")]:::db
+    PG_Business[("PostgreSQL<br/>Sequelize: Business Data")]:::db
+    PG_Graph[("PostgresSaver<br/>LangGraph Checkpointer")]:::db
+    VectorDB[("Vector DB<br/>Historical Deals")]:::db
 
     API --> PG_Business
-    Orchestrator <--> |State Snapshot / HITL| PG_Graph
+    Orchestrator -->|State Snapshot / HITL| PG_Graph
+    PG_Graph -->|Load State| Orchestrator
 
     %% 4. Agent Nodes (The Brains)
-    subgraph Track_1 [Track 1: Vatsal - Core Foundations]
+    subgraph Track_1 ["Track 1: Vatsal - Core Foundations"]
         Parse[OfferParsingAgent]:::agent
         Decide[DecisionAgent]:::agent
     end
 
-    subgraph Track_2 [Track 2: Yug - Intelligence & Voice]
+    subgraph Track_2 ["Track 2: Yug - Intelligence & Voice"]
         Tone[ToneAnalysisAgent]:::agent
         Behavior[BehaviorAnalysisAgent]:::agent
         Concern[ConcernExtractionAgent]:::agent
@@ -44,13 +47,13 @@ graph TD
         Validate[ValidationAgent]:::agent
     end
 
-    subgraph Track_3 [Track 3: Adarsh - Strategy & Math]
+    subgraph Track_3 ["Track 3: Adarsh - Strategy & Math"]
         Profile[VendorProfilingAgent]:::agent
         Meso[MESOGenerationAgent]:::agent
         Stall[StallRecoveryAgent]:::agent
     end
 
-    subgraph Track_4_5 [Track 4 & 5 - RAG & Utilities]
+    subgraph Track_4_5 ["Track 4 & 5 - RAG & Utilities"]
         Rag[RAGContextAgent]:::agent
         Search[VectorSearchAgent]:::agent
         Doc[DocumentGenAgent]:::agent
@@ -66,23 +69,24 @@ graph TD
     Behavior --> Decide
     Concern --> Decide
     Profile --> Decide
-    Decide --> |Counter/Meso| Meso
-    Decide --> |Counter/Meso| Stall
+    Decide -->|Counter / Meso| Meso
+    Decide -->|Counter / Meso| Stall
     Meso --> Respond
     Stall --> Respond
     Respond --> Validate
-    Validate --> |Pass/Fail Loop| Orchestrator
+    Validate -->|Pass / Fail Loop| Orchestrator
     
     %% RAG Integration
-    Search <--> VectorDB
+    Search --> VectorDB
+    VectorDB --> Search
     Rag --> Search
     Rag --> Decide
 
     %% 5. External APIs
     LLM["LLM Services<br/>(OpenAI / Anthropic)"]:::ext
-    Parse --> |API Calls| LLM
-    Respond --> |API Calls| LLM
-    Decide --> |API Calls| LLM
+    Parse -->|API Calls| LLM
+    Respond -->|API Calls| LLM
+    Decide -->|API Calls| LLM
 ```
 
 ### Flow Explanation:
